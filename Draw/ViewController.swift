@@ -140,7 +140,8 @@ class ViewController: UIViewController {
         if currentAnimationIndex >= pathArray.count {
             //标志结束位
             print("所有的动画都结束了")
-            startAnimationBtn.isEnabled = true
+            startAnimationBtn.setTitle("回放", for: UIControl.State.normal)
+            currentAnimationView = nil
             return
         }
         
@@ -189,13 +190,17 @@ class ViewController: UIViewController {
         pathArray.removeAll()
         currentAnimationIndex = 0
         currentArray?.removeAll()
+        currentAnimationView = nil
     }
     
     @objc func handleAnimationRecordingBtn(btn : UIButton) {
-        btn.isEnabled = false
-        cleanAllDraw()
-        currentAnimationIndex = 0
-        startNextAnimation()
+        if currentAnimationView != nil {
+            animationAction()
+        } else {
+            cleanAllDraw()
+            currentAnimationIndex = 0
+            startNextAnimation()
+        }
     }
     
     @objc func startDrawRecording(link:CADisplayLink) {
@@ -218,5 +223,42 @@ class ViewController: UIViewController {
         endAllAnimation()
         cleanAllDraw()
     }
+    
+    //暂停动画
+    func animationAction() {
+        if currentAnimationView != nil {
+            if currentAnimationView?.layer.speed == 0.0 {
+                //启动动画
+                continueAnimation()
+            } else {
+                //暂停动画
+                pauseAnimation()
+            }
+        }
+    }
+    
+    //暂停动画
+    func pauseAnimation() {
+        print("暂停动画")
+        let frame = (currentAnimationView?.layer.presentation()?.frame)!
+        let pauseT = currentAnimationView?.layer .convertTime(CACurrentMediaTime(), from: nil)
+        currentAnimationView?.layer.speed = 0.0
+        currentAnimationView?.layer.timeOffset = pauseT!
+        currentAnimationView?.frame = frame
+        startAnimationBtn.setTitle("播放", for: UIControl.State.normal)
+    }
+    
+    //继续执行动画
+    func continueAnimation() {
+        print("继续动画")
+        let pauseT = currentAnimationView?.layer.timeOffset
+        currentAnimationView?.layer.speed = 1
+        currentAnimationView?.layer.timeOffset = 0.0
+        currentAnimationView?.layer.beginTime = 0.0
+        let startT = (currentAnimationView?.layer.convertTime(CACurrentMediaTime(), from: nil))! - pauseT!
+        currentAnimationView?.layer.beginTime = startT
+        startAnimationBtn.setTitle("暂停", for: UIControl.State.normal)
+    }
 }
+
 
